@@ -29,7 +29,7 @@ Ensure the following Python libraries are installed:
 
 You can install `ttkbootstrap` using pip:
 ```bash
-
+pip install ttkbootstrap
 
 
 
