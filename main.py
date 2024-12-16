@@ -1,3 +1,5 @@
+import zipfile
+
 from ttkbootstrap import Window, Label, Entry, Button, Treeview, OUTLINE, PRIMARY, DANGER, INFO, SECONDARY, SUCCESS, \
     WARNING
 import os
@@ -10,7 +12,7 @@ from tkinter import simpledialog
 
 window = Window(title="Explore Path Application", themename="cyborg")
 window.grid_columnconfigure(1, weight=1)
-window.grid_rowconfigure(5, weight=1)
+window.grid_rowconfigure(6, weight=1)
 
 path_label = Label(window, text="Path")
 path_label.grid(row=0, column=0, pady=10, padx=10, sticky="e")
@@ -293,8 +295,57 @@ def copy():
 copy_button = Button(window, text="Copy", bootstyle=WARNING + OUTLINE, width=50, command=copy)
 copy_button.grid(row=4, column=1, pady=10, padx=(0, 40), sticky="e")
 
+
+def zip_btn_clicked():
+    """Zip a folder"""
+    selected_path = explore_treeview.selection()[0]
+    path_lib = Path(selected_path)
+
+    if not path_lib.is_dir():
+        Messagebox.show_error(title="Error", message="Please select a folder to zip")
+        return
+
+    # Create a zip file in the same directory as the selected folder
+    zip_path = path_lib.parent / f"{path_lib.name}.zip"
+
+    with zipfile.ZipFile(str(zip_path), mode="w") as zip_file:
+        for main_folder, folders, files in os.walk(selected_path):
+            for file in files:
+                file_fullpath = os.path.join(main_folder, file)
+                relative_path = os.path.relpath(file_fullpath, selected_path)
+                zip_file.write(file_fullpath, relative_path)
+
+    Messagebox.show_info(title="Success", message="Folder zipped successfully!")
+    explore_path()
+
+
+zip_button = Button(window, text="Zip", bootstyle=PRIMARY, width=50, command=zip_btn_clicked)
+zip_button.grid(row=5, column=1, pady=10, padx=(60, 0), sticky="w")
+
+
+def extract_btn_clicked():
+    """Extract a zip file"""
+    selected_path = explore_treeview.selection()[0]
+    path_lib = Path(selected_path)
+
+    if not path_lib.suffix == '.zip':
+        Messagebox.show_error(title="Error", message="Please select a zip file to extract")
+        return
+
+    destination_folder = simpledialog.askstring("Extract", "Enter destination path for extraction:")
+    if destination_folder:
+        with zipfile.ZipFile(selected_path, mode="r") as zip_file:
+            zip_file.extractall(destination_folder)
+
+        Messagebox.show_info(title="Success", message="Files extracted successfully!")
+        explore_path()
+
+
+extract_button = Button(window, text="Extract", bootstyle=PRIMARY, width=50,command= extract_btn_clicked)
+extract_button.grid(row=5, column=1, pady=10, padx=(0, 60), sticky="e")
+
 explore_treeview = Treeview(window, columns=("name", "type", "size", "create", "modified", "accessed"))
-explore_treeview.grid(row=5, column=1, pady=(0, 10), padx=(0, 10), sticky="nsew")
+explore_treeview.grid(row=6, column=1, pady=(0, 10), padx=(0, 10), sticky="nsew")
 
 explore_treeview.heading("#0", text="#")
 explore_treeview.heading("#1", text="Name")
